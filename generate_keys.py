@@ -12,8 +12,6 @@ To run this script, enter a django shell:
 """
 
 
-outfile = open('keys.txt','w')
-
 def make_key(seed):
   secexp = randrange_from_seed__trytryagain(seed, NIST384p.order)
   return SigningKey.from_secret_exponent(secexp, curve=NIST384p)
