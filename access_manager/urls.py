@@ -9,6 +9,7 @@ from login.views import *
 # Additionally, we include login URLs for the browsable API.
 router = routers.DefaultRouter()
 router.register(r'profiles', ProfileViewSet)
+router.register(r'users', UserViewSet)
 
 urlpatterns = [
     url(r'^', include(router.urls)),
