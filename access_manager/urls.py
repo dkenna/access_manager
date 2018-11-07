@@ -13,7 +13,8 @@ router.register(r'profiles', ProfileViewSet)
 urlpatterns = [
     url(r'^', include(router.urls)),
     path('admin/', admin.site.urls),
-    url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework'))
+    url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+    path('accounts/', include('django.contrib.auth.urls')),
 ]
 
 
