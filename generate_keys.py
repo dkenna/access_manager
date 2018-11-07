@@ -4,9 +4,13 @@ from django.contrib.auth.models import User
 from binascii import hexlify
 from generate_usernames import get_uname
 import os
-#from django.core.management import setup_environ
-#from access_manager import settings
-#setup_environ(settings)
+
+"""
+To run this script, enter a django shell:
+...
+>>> execfile('generate_keys.py')
+"""
+
 
 outfile = open('keys.txt','w')
 
