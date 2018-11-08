@@ -5,9 +5,9 @@ from django.dispatch import receiver
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    public_key = models.TextField(max_length=500, blank=True)
-    private_key = models.TextField(max_length=500, blank=True)
-    seed = models.TextField(max_length=500, blank=True)
+    public_key = models.TextField(blank=True)
+    private_key = models.TextField(blank=True)
+    seed = models.TextField(blank=True)
 
     def __str__(self):
         return self.user.username + " Public Key"
