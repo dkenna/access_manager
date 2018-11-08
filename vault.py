@@ -1,11 +1,9 @@
 from ecdsa import SigningKey, NIST384p
 from ecdsa.util import randrange_from_seed__trytryagain
 from binascii import hexlify, unhexlify
-from jose import jwk
-from jose.utils import base64url_decode
-import jsonpickle
+#from jose import jwk
+#from jose.utils import base64url_decode
 import sys
-from jose.backends.ecdsa_backend import ECDSAECKey
 
 
 '''

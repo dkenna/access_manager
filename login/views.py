@@ -13,7 +13,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(many=False, read_only=True)
     class Meta:
         model = Profile
-        fields = ('public_key','user')
+        fields = ('public_key','private_key','user')
 
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()

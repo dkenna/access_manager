@@ -7,7 +7,7 @@ A command line application to generate random usernames.
 from argparse import ArgumentParser
 from random import choice as randchoice
 from os import path
-from wordlists import ADJECTIVES, NOUNS
+from initial_data.wordlists import ADJECTIVES, NOUNS
 
 
 def check_arguments(args: dict):
