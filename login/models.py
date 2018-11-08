@@ -20,9 +20,8 @@ def create_user_profile(sender, instance, created, **kwargs):
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
     instance.profile.save()
-"""
+
 class Challenge(models.Model):
     timestamp = models.DateTimeField()
     user = models.ForeignKey(User,on_delete=models.PROTECT)
-    signed_challenge = models.CharField(max_length=1024)
-"""
+    signed_challenge = models.TextField(blank=True)

@@ -1,8 +1,6 @@
 from ecdsa import SigningKey, NIST384p
 from ecdsa.util import randrange_from_seed__trytryagain
 from binascii import hexlify, unhexlify
-#from jose import jwk
-#from jose.utils import base64url_decode
 import sys
 
 
@@ -73,12 +71,21 @@ nMnLvrafiH9Ff7F3yLKtNpejbRX77kAn9mq2m9l97pc5C05G84ZFX+BMBtI=
 """
 rsa_pub = """ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDp9BbX0M0Nqk5c8mdFMcZrlOB5NX93sqnTAzZVWPxoaLmIWXk8eHJuE5MBN9cJZ53E4Zgweog/MIhG/+Cx4wNquKODjkq5ykkItuuVpQzWGmZECnqSr6l+oTC334QDT0PR3DkcxtelC9jbLpu7EjanRJkXGR/CXUN9bQpBCyy7Cdbc6K8R6FcFi8szRnApuEx9Vk4t3U2HdWlhRQrxHmHrFq3vLAoD8MyCEBegV8CXC7ggDMd3A0d8WLlajLdANergS+3ASkABlZwg0hHqVCAGFw6AUGvX3QoU3Nb1ZcL0WXF7oZQRoPsvjYwFJLAcyTQB27W+x1TQ/4pC7i3xkTSyslEreYklMX6pK02eK9EyhmjMIgH8+TdoGKqAYrL8IS6+3/+IMDjBWL6atd7z9c1x81SSdLuBFFWfNZVw+91+/qZf1e48LSpHxgUhegpEvJnokzHjz92dUkVbTfocWIxzAhNyFdx9fIzWfH8uWORrS//f8UBnD9GehBk2EYbyIFGCPuqInfpJKbl44NPM2pejOsDZRWyE0GUS47tVos6xKjkpZLY5q9AEMX7Sn7Ue7Tq+bmupbHLPPQX14B72HoG9oUkTS/2kuG0uLhp1V4aPV59Fy1L0ZF4F0LZY0VQw0JEmnkfkSXG+UozzBhVBDvi/S/DXFLy5mhiRYXKkdDTWUw== dkenna@MacBook-Pro.local"""
 
-"""print(hexlify(key.to_string()))
-print(hexlify(pub.to_string()))
-print(dir(key))
-print(dir(pub))"""
-#print(jsonpickle.encode(pub))
-#sys.exit()
+
+rsa_pub_pem = """-----BEGIN RSA PUBLIC KEY-----
+MIICCgKCAgEA6fQW19DNDapOXPJnRTHGa5TgeTV/d7Kp0wM2VVj8aGi5iFl5PHhy
+bhOTATfXCWedxOGYMHqIPzCIRv/gseMDarijg45KucpJCLbrlaUM1hpmRAp6kq+p
+fqEwt9+EA09D0dw5HMbXpQvY2y6buxI2p0SZFxkfwl1DfW0KQQssuwnW3OivEehX
+BYvLM0ZwKbhMfVZOLd1Nh3VpYUUK8R5h6xat7ywKA/DMghAXoFfAlwu4IAzHdwNH
+fFi5Woy3QDXq4EvtwEpAAZWcINIR6lQgBhcOgFBr190KFNzW9WXC9Flxe6GUEaD7
+L42MBSSwHMk0Adu1vsdU0P+KQu4t8ZE0srJRK3mJJTF+qStNnivRMoZozCIB/Pk3
+aBiqgGKy/CEuvt//iDA4wVi+mrXe8/XNcfNUknS7gRRVnzWVcPvdfv6mX9XuPC0q
+R8YFIXoKRLyZ6JMx48/dnVJFW036HFiMcwITchXcfXyM1nx/Lljka0v/3/FAZw/R
+noQZNhGG8iBRgj7qiJ36SSm5eODTzNqXozrA2UVshNBlEuO7VaLOsSo5KWS2OavQ
+BDF+0p+1Hu06vm5rqWxyzz0F9eAe9h6BvaFJE0v9pLhtLi4adVeGj1efRctS9GRe
+BdC2WNFUMNCRJp5H5ElxvlKM8wYVQQ74v0vw1xS8uZoYkWFypHQ01lMCAwEAAQ==
+-----END RSA PUBLIC KEY-----"""
+
 
 class KeyGenerator:
     def make_key(seed):

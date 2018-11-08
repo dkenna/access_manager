@@ -3,7 +3,7 @@ from ecdsa.util import randrange_from_seed__trytryagain
 from django.contrib.auth.models import User
 from binascii import hexlify
 from initial_data.generate_usernames import get_uname
-import os
+import os, sys
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.backends import default_backend
@@ -22,18 +22,16 @@ def make_key(seed):
 def make_rsa_users():
     for i in range(25):
         key = rsa.generate_private_key(backend=default_backend(), public_exponent=65537, key_size=2048)
-        public_key = key.public_key().public_bytes(serialization.Encoding.OpenSSH, serialization.PublicFormat.OpenSSH)
+        public_key = key.public_key().public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.PKCS1)
         pem = key.private_bytes(encoding=serialization.Encoding.PEM, format=serialization.PrivateFormat.TraditionalOpenSSL, encryption_algorithm=serialization.NoEncryption())
         print(pem)
         print(public_key)
-        #private_key_str = pem.decode('utf-8')
-        #public_key_str = public_key.decode('utf-8')
         uname = get_uname(0,255,False)
         mail = uname + "@" + "mail.com"
         user = User()
         user.username = uname
         user.email = mail
-        user.password = "password1"
+        user.set_password("password1")
         user.save()
         user.profile.public_key = public_key
         user.profile.private_key = pem
@@ -62,8 +60,3 @@ def make_ecdsa_users():
         print(uname)
         print(sk_hex)
         print(vk_hex)
-
-"""
-if __name__ == "__main__":
-    make_rsa_users()
-"""
