@@ -38,6 +38,12 @@ def make_rsa_users():
         user.save()
         #print(private_key_str)
         #print(public_key_str)
+
+def delete_users():
+    users = User.objects.all()
+    for i in users:
+        if i.username != "admin": i.delete()
+#delete_users()
 make_rsa_users()
 
 def make_ecdsa_users():
