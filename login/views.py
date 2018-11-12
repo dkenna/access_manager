@@ -2,18 +2,13 @@ from django.shortcuts import render
 from login.models import Profile
 from django.contrib.auth.models import User
 from rest_framework import routers, serializers, viewsets
-
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ('username', 'email')
-
-class ProfileSerializer(serializers.ModelSerializer):
-    #user = serializers.HyperlinkedRelatedField( many=False, read_only=True, view_name='user-detail')
-    user = UserSerializer(many=False, read_only=True)
-    class Meta:
-        model = Profile
-        fields = ('public_key','private_key','user')
+from django.http import JsonResponse, HttpResponseBadRequest
+from token_generator import Challenge, SignedChallengeVerifier
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+from jwt.exceptions import InvalidSignatureError 
+import json
+from login.serializers import *
 
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
@@ -23,3 +18,43 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
+@require_http_methods(["GET"])
+def get_token(request):
+    challenge = Challenge()
+    token = {'token':challenge.get_signed_timestamp()}
+    return JsonResponse(token)
+
+@require_http_methods(["POST"])
+@csrf_exempt
+def validate_token(request):
+    challenge = Challenge()
+    try:
+        body = request.body.decode('utf-8')
+        payload = json.loads(body)
+        token = payload['token']
+        decoded = challenge.validate_timestamp(token)
+        return JsonResponse(decoded)
+    except Exception as e:
+        print(e)
+        return HttpResponseBadRequest()
+
+@require_http_methods(["POST"])
+@csrf_exempt
+def login(request):
+    """
+        Simple authentication with a signed token
+    """
+    verifier = SignedChallengeVerifier()
+    try:
+        body = request.body.decode('utf-8')
+        payload = json.loads(body)
+        username = payload['username']
+        signed_challenge = payload['signed_challenge']
+        verifier = SignedChallengeVerifier()
+        decoded = verifier.verify_sig(username,signed_challenge)
+        verifier.verify_timestamp(decoded["timestamp"])
+        return JsonResponse(decoded)
+    except Exception as e:
+        print(e)
+        return HttpResponseBadRequest()
+    pass

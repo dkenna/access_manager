@@ -24,6 +24,8 @@ def make_rsa_users():
         key = rsa.generate_private_key(backend=default_backend(), public_exponent=65537, key_size=2048)
         public_key = key.public_key().public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.PKCS1)
         pem = key.private_bytes(encoding=serialization.Encoding.PEM, format=serialization.PrivateFormat.TraditionalOpenSSL, encryption_algorithm=serialization.NoEncryption())
+        public_key = str(public_key,"utf-8")
+        pem = str(pem,"utf-8")
         print(pem)
         print(public_key)
         uname = get_uname(0,255,False)
