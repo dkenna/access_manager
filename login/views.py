@@ -3,12 +3,13 @@ from login.models import Profile
 from django.contrib.auth.models import User
 from rest_framework import routers, serializers, viewsets
 from django.http import JsonResponse, HttpResponseBadRequest
-from token_generator import Challenge, SignedChallengeVerifier
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from jwt.exceptions import InvalidSignatureError 
 import json
 from login.serializers import *
+from token_generator import Challenge, SignedChallengeVerifier
+from token_generator import Token, ChallengeToken
 
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
@@ -20,9 +21,8 @@ class UserViewSet(viewsets.ModelViewSet):
 
 @require_http_methods(["GET"])
 def get_token(request):
-    challenge = Challenge()
-    token = {'token':challenge.get_signed_timestamp()}
-    return JsonResponse(token)
+    token = ChallengeToken().signed()
+    return JsonResponse({"token":token})
 
 @require_http_methods(["POST"])
 @csrf_exempt
