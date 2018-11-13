@@ -18,7 +18,8 @@ urlpatterns = [
     path('accounts/', include('django.contrib.auth.urls')),
     url(r"^get_token/",get_token),
     url(r"^validate_token/",validate_token),
-    url(r"^login/",login),
+#    url(r"^login/",login),
+    url(r"^login/",challenge_login),
 ]
 
 

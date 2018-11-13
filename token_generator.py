@@ -15,7 +15,7 @@ To run this script, enter a django shell:
 >>> exec(open("./tokenizer.py").read())
 """
 
-SIGNING_ALGO = "RS512"
+SIGNING_ALGO = "RS256"
 TOKEN_TTL = 300 #5 minutes
 TOKEN_TTL_LOGIN = 120 #22 minutes
 
@@ -71,7 +71,7 @@ class Challenge:
 
 class SignedChallengeVerifier:
 
-    def verify_sig(self,username,signed_challenge):
+    def verify(self,username,signed_challenge):
         """
             check if signed_challenged is signed by the private
             key of username.
@@ -84,7 +84,7 @@ class SignedChallengeVerifier:
             chech if the timestamp is not older than 300 seconds
         """
         now = int(time.time())
-        return (now - timestamp) < TOKEN_TTL
+        return (now - timestamp) < TOKEN_TTL_LOGIN
 
 def test():
     for i in range(25):

@@ -2,7 +2,7 @@ from django.shortcuts import render
 from login.models import Profile
 from django.contrib.auth.models import User
 from rest_framework import routers, serializers, viewsets
-from django.http import JsonResponse, HttpResponseBadRequest
+from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseRedirect
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from jwt.exceptions import InvalidSignatureError 
@@ -10,6 +10,8 @@ import json
 from login.serializers import *
 from token_generator import Challenge, SignedChallengeVerifier
 from token_generator import Token, ChallengeToken
+from .forms import ChallengeLoginForm
+from django.contrib.auth import authenticate, login
 
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
@@ -38,12 +40,10 @@ def validate_token(request):
         print(e)
         return HttpResponseBadRequest()
 
-@require_http_methods(["POST"])
+"""@require_http_methods(["POST"])
 @csrf_exempt
 def login(request):
-    """
         Simple authentication with a signed token
-    """
     verifier = SignedChallengeVerifier()
     try:
         body = request.body.decode('utf-8')
@@ -58,3 +58,20 @@ def login(request):
         print(e)
         return HttpResponseBadRequest()
     pass
+"""
+
+
+def challenge_login(request):
+    if request.method == 'POST':
+        form = ChallengeLoginForm(request.POST)
+        if form.is_valid():
+            token = form.cleaned_data['signed_challenge']
+            print(token)
+            user = authenticate(request,username=form.cleaned_data['username'],signed_challenge=form.cleaned_data['signed_challenge'])
+            if user is not None:
+                login(request, user)
+                return HttpResponseRedirect('/')
+    else:
+        form = ChallengeLoginForm()
+
+    return render(request, 'challenge_login.html', {'form': form})
