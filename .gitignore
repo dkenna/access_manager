@@ -5,3 +5,10 @@ __pycache__/
 
 
 *.swp
+
+
+authenticator/key.txt
+db.sqlite3_bak
+initial_data/users.txt
+login/migrations/
+node_modules/

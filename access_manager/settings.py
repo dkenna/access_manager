@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'login',
     'authenticator',
     'corsheaders',
+    'oidc_provider',
 ]
 
 MIDDLEWARE = [
@@ -125,9 +126,18 @@ REST_FRAMEWORK = {
     ]
 }
 
+#needed by?
 LOGIN_REDIRECT_URL = '/'
+
+#needed by oidc_provider
+LOGIN_URL = '/accounts/login/'
+
 CORS_ORIGIN_ALLOW_ALL = DEBUG
-"""CORS_ORIGIN_WHITELIST = (
+
+"""
+#the white list doesn't seem to work
+#when working from different ports on localhost
+CORS_ORIGIN_WHITELIST = (
     'localhost',
     '127.0.0.1'
 )"""

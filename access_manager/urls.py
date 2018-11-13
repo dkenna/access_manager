@@ -21,6 +21,8 @@ urlpatterns = [
 #    url(r"^login/",login),
     url(r"^login/",challenge_login),
     url(r"^token_login/",token_login),
+    url(r'^openid/', include('oidc_provider.urls', namespace='oidc_provider')),
+
 ]
 
 
