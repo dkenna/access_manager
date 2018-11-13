@@ -20,6 +20,7 @@ urlpatterns = [
     url(r"^validate_token/",validate_token),
 #    url(r"^login/",login),
     url(r"^login/",challenge_login),
+    url(r"^token_login/",token_login),
 ]
 
 

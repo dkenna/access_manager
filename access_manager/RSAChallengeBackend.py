@@ -17,8 +17,10 @@ class RSAChallengeBackend:
         try:
             verifier = SignedChallengeVerifier()
             decoded = verifier.verify(username,signed_challenge)
-        except InvalidSignatureError as e:
+        except Exception as e:
             """log some shit here"""
+            print("sig decoding failed")
+            print(e)
             return None
         return user
 

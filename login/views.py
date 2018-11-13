@@ -40,25 +40,27 @@ def validate_token(request):
         print(e)
         return HttpResponseBadRequest()
 
-"""@require_http_methods(["POST"])
+@require_http_methods(["POST"])
 @csrf_exempt
-def login(request):
+def token_login(request):
+    """
         Simple authentication with a signed token
-    verifier = SignedChallengeVerifier()
+    """
     try:
         body = request.body.decode('utf-8')
         payload = json.loads(body)
         username = payload['username']
         signed_challenge = payload['signed_challenge']
-        verifier = SignedChallengeVerifier()
-        decoded = verifier.verify_sig(username,signed_challenge)
-        verifier.verify_timestamp(decoded["timestamp"])
-        return JsonResponse(decoded)
+        user = authenticate(request,username=username,signed_challenge=signed_challenge)
+        if user is not None:
+            login(request, user)
+            return JsonResponse({'authentication':'successful'})
+        else:
+            return HttpResponse('Unauthorized', status=401)
     except Exception as e:
         print(e)
         return HttpResponseBadRequest()
     pass
-"""
 
 
 def challenge_login(request):
