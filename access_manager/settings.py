@@ -94,7 +94,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 AUTHENTICATION_BACKENDS = [
     'access_manager.RSAChallengeBackend.RSAChallengeBackend',
-#    'django.contrib.auth.backends.ModelBackend',
+    'django.contrib.auth.backends.ModelBackend',
 ]
 
 
