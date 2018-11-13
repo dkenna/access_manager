@@ -1,0 +1,2 @@
+Rename this project to identity_provider.
+It will be responsible for identification, using the signing of a challenge as login mechanism.
