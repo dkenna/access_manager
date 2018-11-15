@@ -13,7 +13,7 @@ SECRET_KEY = 'm&+ot!3sggh1u04^@&@for0=dqdy&i9sy=u6e9fdk!cf1zi@i#'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost','oidcprovider','testrp']
 
 
 # Application definition
@@ -130,7 +130,7 @@ REST_FRAMEWORK = {
 LOGIN_REDIRECT_URL = '/'
 
 #needed by oidc_provider
-LOGIN_URL = '/accounts/login/'
+LOGIN_URL = '/login/'
 
 CORS_ORIGIN_ALLOW_ALL = DEBUG
 

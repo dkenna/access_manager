@@ -72,6 +72,10 @@ def challenge_login(request):
             user = authenticate(request,username=form.cleaned_data['username'],signed_challenge=form.cleaned_data['signed_challenge'])
             if user is not None:
                 login(request, user)
+                next_url = request.GET.get('next')
+                if next_url:
+                    print('redirecting to: ' + next_url)
+                    return HttpResponseRedirect(next_url)
                 return HttpResponseRedirect('/')
     else:
         form = ChallengeLoginForm()
