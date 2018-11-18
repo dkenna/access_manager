@@ -27,7 +27,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'login',
-    'authenticator',
     'corsheaders',
     'oidc_provider',
 ]
@@ -43,7 +42,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'access_manager.urls'
+ROOT_URLCONF = 'authenticator.urls'
 
 TEMPLATES = [
     {
@@ -61,7 +60,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'access_manager.wsgi.application'
+WSGI_APPLICATION = 'authenticator.wsgi.application'
 
 
 # Database
@@ -94,7 +93,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 AUTHENTICATION_BACKENDS = [
-    'access_manager.RSAChallengeBackend.RSAChallengeBackend',
+    'authenticator.RSAChallengeBackend.RSAChallengeBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
 
