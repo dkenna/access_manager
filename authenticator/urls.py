@@ -15,6 +15,7 @@ urlpatterns = [
     url(r'^', include(router.urls)),
     path('admin/', admin.site.urls),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+    url(r'', include('user_sessions.urls', 'user_sessions')),
     path('accounts/', include('django.contrib.auth.urls')),
     url(r"^get_token/",get_token),
     url(r"^validate_token/",validate_token),

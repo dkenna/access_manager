@@ -28,10 +28,13 @@ def make_rsa_users():
         pem = str(pem,"utf-8")
         print(pem)
         print(public_key)
-        uname = get_uname(0,255,False)
+        first,last = get_uname(0,255,False)
+        uname = first + last
         mail = uname + "@" + "mail.com"
         user = User()
         user.username = uname
+        user.first_name = first
+        user.last_name = last
         user.email = mail
         user.set_password("password1")
         user.save()

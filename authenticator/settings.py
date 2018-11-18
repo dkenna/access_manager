@@ -22,7 +22,8 @@ INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.sessions',
+    #'django.contrib.sessions',
+    'user_sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
@@ -33,7 +34,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    #'django.contrib.sessions.middleware.SessionMiddleware',
+    'user_sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -127,6 +129,7 @@ REST_FRAMEWORK = {
 
 #needed by?
 LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
 
 #needed by oidc_provider
 LOGIN_URL = '/login/'
@@ -140,3 +143,7 @@ CORS_ORIGIN_WHITELIST = (
     'localhost',
     '127.0.0.1'
 )"""
+
+#django-user-sessions
+SESSION_ENGINE = 'user_sessions.backends.db'
+SESSION_COOKIE_NAME = 'authn_session_id'

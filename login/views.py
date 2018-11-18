@@ -58,6 +58,7 @@ def token_login(request):
         else:
             return HttpResponse('Unauthorized', status=401)
     except Exception as e:
+        print(type(e))
         print(e)
         return HttpResponseBadRequest()
     pass

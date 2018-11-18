@@ -45,7 +45,7 @@ def get_uname(min_size: int, max_size: int, underscores: bool):
     else:
         camel_case_adjective = adjective[0].upper() + adjective[1:]
         camel_case_noun = noun[0].upper() + noun[1:]
-        uname = (camel_case_adjective + camel_case_noun)
+        uname = (camel_case_adjective, camel_case_noun)
     if not (min_size <= len(uname) and len(uname) <= max_size):
         uname = get_uname(min_size, max_size, underscores)
     return uname
