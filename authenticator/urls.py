@@ -4,6 +4,8 @@ from django.conf.urls import url, include
 from django.contrib.auth.models import User
 from rest_framework import routers, serializers
 from login.views import *
+from django.conf.urls.static import static
+from django.conf import settings
 
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.
@@ -24,6 +26,6 @@ urlpatterns = [
     url(r"^token_login/",token_login),
     url(r'^openid/', include('oidc_provider.urls', namespace='oidc_provider')),
 
-]
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 

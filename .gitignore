@@ -8,6 +8,7 @@ db.sqlite3
 *.swp
 
 
+static/
 authenticator/key.txt
 db.sqlite3_bak
 initial_data/users.txt
