@@ -13,7 +13,7 @@ SECRET_KEY = 'm&+ot!3sggh1u04^@&@for0=dqdy&i9sy=u6e9fdk!cf1zi@i#'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost','oidcprovider','testrp']
+ALLOWED_HOSTS = ['localhost','oidcprovider','testrp','80236.s.time4vps.cloud']
 
 
 # Application definition
