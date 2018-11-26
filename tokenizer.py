@@ -2,7 +2,7 @@ import jwt
 from jwt.algorithms import RSAAlgorithm
 import time
 from datetime import datetime
-from django.contrib.auth.models import User
+#from django.contrib.auth.models import User
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 import os
@@ -20,33 +20,47 @@ TOKEN_TTL = 300 #5 minutes
 TOKEN_TTL_LOGIN = 120 #22 minutes
 TOKEN_TYPES = ({"authentication":"auth","update_pub_key":"udpk"})
 
-class Token:
+class BaseToken:
     _jit = random.randint(100000000,999999999)
-
     def __init__(self):
         self.claims = {}
         self.claims['exp'] = self.now() + TOKEN_TTL
         self.claims['nbf'] = self.now()
-        self.claims['iss'] = "urn:auth_server"
+        self.claims['iss'] = "urn:authn_server"
         self.claims['aud'] = "urn:anybody"
         self.claims['iat'] = self.now()
-        self.claims['jit'] = Token._jit        
-        Token._jit += 1
+        self.claims['jit'] = BaseToken._jit        
+        BaseToken._jit += 1
 
-    def signed(self):
+    def token(self):
         token = jwt.encode(self.claims, VAULT.rsa_key, algorithm=SIGNING_ALGO).decode('utf-8')
         return token
 
     def now(self):
         return int(time.time())
         
-    def verify(self,pub):
-        return jwt.decode(self.token, pub, algorithms=SIGNING_ALGO)
+    def verify(self,token):
+        return jwt.decode(token, VAULT.rsa_pub_pem, algorithms=SIGNING_ALGO,\
+                 audience=['urn:anybody'])
 
     def verify_timestamp(self):
         return self.token["exp"] > self.now()
 
-class AuthToken(Token):
+    def get_jwk(self):
+        pub_bytes = bytes(VAULT.rsa_pub_pem,"utf-8")
+        public_key = serialization.load_pem_public_key(pub_bytes, backend=default_backend())
+        return RSAAlgorithm.to_jwk(public_key)
+        
+class UserToken(BaseToken):
+    def __init__(self,user):
+        super().__init__()
+        self.user = user
+        self.claims['username'] = user.username
+        self.claims['email'] = user.email
+        self.claims['first_name'] = user.first_name
+        self.claims['last_name'] = user.last_name
+
+class AuthChallenge(BaseToken):
     '''
         token for auth
     '''
@@ -55,7 +69,7 @@ class AuthToken(Token):
         self.claims['exp'] = self.now() + TOKEN_TTL_LOGIN
         self.claims['typ'] = TOKEN_TYPES["authentication"]
 
-class KeyToken(Token):
+class KeyChallenge(BaseToken):
     '''
         token for pub key update
     '''
@@ -64,44 +78,37 @@ class KeyToken(Token):
         self.claims['exp'] = self.now() + TOKEN_TTL_LOGIN
         self.claims['typ'] = TOKEN_TYPES["update_pub_key"]
 
-class Challenge:
-    def get_signed_timestamp(self):
-        timestamp = int(time.time())
-        claim = {'timestamp':timestamp}
-        token = jwt.encode(claim, VAULT.rsa_key, algorithm=SIGNING_ALGO).decode('utf-8')
-        return token
-
-    def get_jwk(self):
-        pub_bytes = bytes(VAULT.rsa_pub_pem,"utf-8")
-        public_key = serialization.load_pem_public_key(pub_bytes, backend=default_backend())
-        return RSAAlgorithm.to_jwk(public_key)
-
-    def validate_timestamp(self,token):
-        return jwt.decode(token, VAULT.rsa_pub_pem, algorithms=SIGNING_ALGO)
-
-class SignedChallengeVerifier:
-
-    def verify(self,username,signed_challenge):
-        """
-            check if signed_challenged is signed by the private
-            key of username.
-        """
-        pub = User.objects.get(username=username).profile.public_key
-        return jwt.decode(signed_challenge, pub, algorithms=SIGNING_ALGO)
+class SignedChallenge:
+    """
+        signed challenge (auth or key)
+    """
+    def verify(self,pub_key,signed_challenge):
+        """ check if signed by user """
+        return jwt.decode(signed_challenge, pub_key, algorithms=SIGNING_ALGO)
 
     def verify_timestamp(self,timestamp):
-        """
-            chech if the timestamp is not older than 300 seconds
-        """
+        """ check if timestamp < TOKEN_TTL_LOGIN """
         now = int(time.time())
         return (now - timestamp) < TOKEN_TTL_LOGIN
 
-def test():
+
+def test_tokens():
     for i in range(25):
-        challenge = Challenge()
-        token = challenge.signed_timestamp()
+        challenge = AuthChallenge()
+        token = challenge.token()
+        verify = challenge.verify(token)
         print(token)
+        print(verify)
         key = challenge.get_jwk()
         print(key)
-        time.sleep(1)
+    for i in range(25):
+        challenge = KeyChallenge()
+        token = challenge.token()
+        verify = challenge.verify(token)
+        print(token)
+        print(verify)
+        key = challenge.get_jwk()
+        print(key)
 
+if __name__ == '__main__':
+    test()

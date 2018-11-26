@@ -8,9 +8,8 @@ from django.views.decorators.csrf import csrf_exempt
 from jwt.exceptions import InvalidSignatureError 
 import json
 from login.serializers import *
-from token_generator import Challenge, SignedChallengeVerifier
-from token_generator import TOKEN_TYPES, Token, AuthToken, KeyToken
-from .forms import ChallengeLoginForm
+from tokenizer import AuthChallenge, KeyChallenge, UserToken
+from .forms import *
 from django.contrib.auth import authenticate, login
 import random
 
@@ -28,17 +27,12 @@ def create_session(user):
     session.save()
 
 @require_http_methods(["GET"])
-def get_update_token(request):
-    return get_token(request, token_type=TOKEN_TYPES['update_pub_key'])
+def get_update_challenge(request):
+    return JsonResponse({"token": KeyChallenge().token()})
 
 @require_http_methods(["GET"])
-def get_auth_token(request):
-    return get_token(request, token_type=TOKEN_TYPES['authentication'])
-
-@require_http_methods(["GET"])
-def get_token(request, token_type):
-    token = AuthToken().signed()
-    return JsonResponse({"token":token})
+def get_auth_challenge(request):
+    return JsonResponse({"token": AuthChallenge().token()})
 
 @require_http_methods(["POST"])
 @csrf_exempt
@@ -68,7 +62,7 @@ def token_login(request):
         user = authenticate(request,username=username,signed_challenge=signed_challenge)
         if user is not None:
             login(request, user)
-            return JsonResponse({'authentication':'successful'})
+            return JsonResponse({'token':UserToken(user).token()})
         else:
             return get_401(request)
     except Exception as e:
@@ -84,7 +78,6 @@ def challenge_login(request):
         if form.is_valid():
             signed_challenge = form.cleaned_data['signed_challenge']
             username = form.cleaned_data['username']
-            print(token)
             user = authenticate(request,username=username,signed_challenge=signed_challenge)
             if user is not None:
                 login(request, user)
@@ -95,7 +88,24 @@ def challenge_login(request):
                 return HttpResponseRedirect('/')
     else:
         form = ChallengeLoginForm()
+    return render(request, 'challenge_login.html', {'form': form})
 
+def passphrase_login(request):
+    if request.method == 'POST':
+        form = PassphraseLoginForm(request.POST)
+        if form.is_valid():
+            passphrase = form.cleaned_data['passphrase']
+            username = form.cleaned_data['username']
+            user = authenticate(request,username=username,passphrase=passphrase)
+            if user is not None:
+                login(request, user)
+                next_url = request.GET.get('next')
+                if next_url:
+                    print('redirecting to: ' + next_url)
+                    return HttpResponseRedirect(next_url)
+                return HttpResponseRedirect('/')
+    else:
+        form = PassphraseLoginForm()
     return render(request, 'challenge_login.html', {'form': form})
 
 def get_json_http_error(request,status,msg):

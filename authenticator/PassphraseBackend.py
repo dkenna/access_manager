@@ -4,21 +4,18 @@ from django.contrib.auth.models import User
 from tokenizer import AuthChallenge, SignedChallenge
 from jwt.exceptions import InvalidSignatureError
 
-class RSAChallengeBackend:
+class PassphraseBackend:
     """
     
     """
 
-    def authenticate(self, request, username, signed_challenge):
+    def authenticate(self, request, username, passphrase):
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
             return None
         try:
-            verifier = SignedChallenge()
-            pub_key = user.profile.public_key
-            print(pub_key)
-            decoded = verifier.verify(pub_key,signed_challenge)
+            passphrase == user.profile.passphrase
         except Exception as e:
             """log some shit here"""
             print("sig decoding failed")
