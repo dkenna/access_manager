@@ -3,10 +3,13 @@ from ecdsa.util import randrange_from_seed__trytryagain
 from django.contrib.auth.models import User
 from binascii import hexlify
 from initial_data.generate_usernames import get_uname
+from initial_data.random_words import gen_passphrase
 import os, sys
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.backends import default_backend
+import names
+import random
 
 """
 To run this script, enter a django shell:
@@ -20,24 +23,30 @@ def make_key(seed):
   return SigningKey.from_secret_exponent(secexp, curve=NIST384p)
 
 def make_rsa_users():
-    for i in range(25):
+    for i in range(35):
         key = rsa.generate_private_key(backend=default_backend(), public_exponent=65537, key_size=2048)
         public_key = key.public_key().public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.PKCS1)
         pem = key.private_bytes(encoding=serialization.Encoding.PEM, format=serialization.PrivateFormat.TraditionalOpenSSL, encryption_algorithm=serialization.NoEncryption())
         public_key = str(public_key,"utf-8")
         pem = str(pem,"utf-8")
-        print(pem)
-        print(public_key)
-        first,last = get_uname(0,255,False)
-        uname = first + last
+        #print(pem)
+        #print(public_key)
+        #first,last = get_uname(0,255,False)
+        first = names.get_first_name(gender=random.choice(["male","female"]))
+        last = names.get_last_name()
+        uname = first.lower() + random.choice([".","_"]) + last.lower()       
         mail = uname + "@" + "mail.com"
         user = User()
         user.username = uname
+        print("create user: " + uname)
         user.first_name = first
         user.last_name = last
         user.email = mail
-        user.set_password("password1")
+        passphrase = gen_passphrase() 
+        print("passphrase: " + passphrase)
+        user.set_password(passphrase)
         user.save()
+        user.profile.passphrase = passphrase
         user.profile.public_key = public_key
         user.profile.private_key = pem
         user.save()
@@ -45,10 +54,13 @@ def make_rsa_users():
         #print(public_key_str)
 
 def delete_users():
+    print('deleting all users except admin!')
     users = User.objects.all()
     for i in users:
-        if i.username != "admin": i.delete()
-#delete_users()
+        if i.username != "admin":
+            print("deleting " + i.username)
+            i.delete()
+delete_users()
 make_rsa_users()
 
 def make_ecdsa_users():

@@ -2,12 +2,14 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+import uuid
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     public_key = models.TextField(blank=True)
     private_key = models.TextField(blank=True)
     seed = models.TextField(blank=True)
+    passphrase = models.CharField(max_length=2048, blank=True)
 
     def __str__(self):
         return self.user.username + " Profile"
@@ -25,3 +27,11 @@ class Challenge(models.Model):
     timestamp = models.DateTimeField()
     user = models.ForeignKey(User,on_delete=models.PROTECT)
     signed_challenge = models.TextField(blank=True)
+
+class TokenSession(models.Model):
+    STATUS = (('OPN','OPEN'),('CLD','CLOSED'))
+    timestamp = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User,on_delete=models.PROTECT)
+    sid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    django_sid = models.CharField(max_length=250,blank=True)
+    status = models.CharField(max_length=2, choices=STATUS, default='OPN')

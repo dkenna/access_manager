@@ -18,6 +18,7 @@ To run this script, enter a django shell:
 SIGNING_ALGO = "RS256"
 TOKEN_TTL = 300 #5 minutes
 TOKEN_TTL_LOGIN = 120 #22 minutes
+TOKEN_TYPES = ({"authentication":"auth","update_pub_key":"udpk"})
 
 class Token:
     _jit = random.randint(100000000,999999999)
@@ -29,7 +30,7 @@ class Token:
         self.claims['iss'] = "urn:auth_server"
         self.claims['aud'] = "urn:anybody"
         self.claims['iat'] = self.now()
-        self.claims['jit'] = Token._jit 
+        self.claims['jit'] = Token._jit        
         Token._jit += 1
 
     def signed(self):
@@ -45,14 +46,23 @@ class Token:
     def verify_timestamp(self):
         return self.token["exp"] > self.now()
 
-class ChallengeToken(Token):
-    """
-        Token with a shortened expiration time,
-        used for login.
-    """
+class AuthToken(Token):
+    '''
+        token for auth
+    '''
     def __init__(self):
         super().__init__()
         self.claims['exp'] = self.now() + TOKEN_TTL_LOGIN
+        self.claims['typ'] = TOKEN_TYPES["authentication"]
+
+class KeyToken(Token):
+    '''
+        token for pub key update
+    '''
+    def __init__(self):
+        super().__init__()
+        self.claims['exp'] = self.now() + TOKEN_TTL_LOGIN
+        self.claims['typ'] = TOKEN_TYPES["update_pub_key"]
 
 class Challenge:
     def get_signed_timestamp(self):

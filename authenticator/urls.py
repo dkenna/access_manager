@@ -19,11 +19,11 @@ urlpatterns = [
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     url(r'', include('user_sessions.urls', 'user_sessions')),
     path('accounts/', include('django.contrib.auth.urls')),
-    url(r"^get_token/",get_token),
-    url(r"^validate_token/",validate_token),
-#    url(r"^login/",login),
-    url(r"^login/",challenge_login),
-    url(r"^token_login/",token_login),
+    url(r"^get_token/?",get_auth_token),
+    url(r"^get_update_token/?",get_update_token),
+    url(r"^validate_token/?",validate_token),
+    url(r"^login/?",challenge_login),
+    url(r"^token_login/?",token_login),
     url(r'^openid/', include('oidc_provider.urls', namespace='oidc_provider')),
 
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

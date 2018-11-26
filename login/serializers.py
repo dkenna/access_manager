@@ -10,4 +10,4 @@ class ProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(many=False, read_only=True)
     class Meta:
         model = Profile
-        fields = ('id','public_key','user')
+        fields = ('id','public_key','private_key', 'passphrase','user')
