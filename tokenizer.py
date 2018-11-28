@@ -60,6 +60,13 @@ class UserToken(BaseToken):
         self.claims['first_name'] = user.first_name
         self.claims['last_name'] = user.last_name
 
+class UpdateToken(BaseToken): 
+    """ token to update a user's private key """
+    def __init__(self,user):
+        super().__init__(user)
+        self.user = user
+        self.claims['username'] = user.username
+
 class AuthChallenge(BaseToken):
     '''
         token for auth
@@ -69,7 +76,7 @@ class AuthChallenge(BaseToken):
         self.claims['exp'] = self.now() + TOKEN_TTL_LOGIN
         self.claims['typ'] = TOKEN_TYPES["authentication"]
 
-class KeyChallenge(BaseToken):
+class PubKeyChallenge(BaseToken):
     '''
         token for pub key update
     '''
@@ -78,7 +85,17 @@ class KeyChallenge(BaseToken):
         self.claims['exp'] = self.now() + TOKEN_TTL_LOGIN
         self.claims['typ'] = TOKEN_TYPES["update_pub_key"]
 
-class SignedChallenge:
+class TokenVerifier:
+    """
+        verify self-emitted token
+    """
+    def __init__(self, token):
+        self.token = token
+    def verify(self):
+        """ check if signed by user """
+        return jwt.decode(self.token, VAULT.pub_key, algorithms=SIGNING_ALGO)
+
+class ChallengeVerifier:
     """
         signed challenge (auth or key)
     """

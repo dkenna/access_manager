@@ -1,2 +1,5 @@
-Rename this project to identity_provider.
-It will be responsible for identification, using the signing of a challenge as login mechanism.
+- implement a taskrunner to do some maintenance analysis on the user login info
+- devise some kind of state representation for the user's login activites.
+    -> could be more relevant for access provider than identity provider
+- adjust the 'aud' claim to be dynamic in PubKeyChallenge and AuthChallenge
+- do some kind of User action logging

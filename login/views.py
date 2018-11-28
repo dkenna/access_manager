@@ -8,10 +8,12 @@ from django.views.decorators.csrf import csrf_exempt
 from jwt.exceptions import InvalidSignatureError 
 import json
 from login.serializers import *
-from tokenizer import AuthChallenge, KeyChallenge, UserToken
+from tokenizer import AuthChallenge, PubKeyChallenge, UserToken, ChallengeVerifier
 from .forms import *
 from django.contrib.auth import authenticate, login
 import random
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.serialization import load_pem_public_key
 
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
@@ -21,26 +23,31 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-def create_session(user):
-    session = TokenSession()
-    session.user = user
-    session.save()
-
 @require_http_methods(["GET"])
 def get_update_challenge(request):
-    return JsonResponse({"token": KeyChallenge().token()})
+    return JsonResponse({"token": PubKeyChallenge().token()})
 
 @require_http_methods(["GET"])
 def get_auth_challenge(request):
     return JsonResponse({"token": AuthChallenge().token()})
 
+def _json(body,keys):
+    """load json and ensure all keys are present"""
+    try:
+        payload = json.loads(body)
+        for i in keys:
+            payload[i]
+    except Exception as e:
+        print("parsing json failed.")
+        raise e
+    return payload
+    
 @require_http_methods(["POST"])
 @csrf_exempt
 def validate_token(request):
-    challenge = Challenge()
+    verifier = ChallengeVerifier()
     try:
-        body = request.body.decode('utf-8')
-        payload = json.loads(body)
+        payload = _json(request.body.decode('utf-8'),['token'])
         token = payload['token']
         decoded = challenge.validate_timestamp(token)
         return JsonResponse(decoded)
@@ -50,27 +57,59 @@ def validate_token(request):
 
 @require_http_methods(["POST"])
 @csrf_exempt
-def token_login(request):
-    """
-        Simple authentication with a signed token
-    """
+def update_pub_key(request):
+    """ update user's public key on the server."""
     try:
-        body = request.body.decode('utf-8')
-        payload = json.loads(body)
+        payload = _json(request.body.decode('utf-8'),['token','pub_key'])
+        claims = TokenVerifier(payload['token']).verify()
+        username = claims['username']
+        load_pem_public_key(pubkey, default_backend())
+        user = User.objects.get(username=username)
+        user.profile.public_key = payload['pub_key']
+        user.save()
+    except:
+        print(type(e))
+        print(e)
+        print('update key failed')
+        return get_401(request)
+
+@require_http_methods(["POST"])
+@csrf_exempt
+def get_update_token(request):
+    """ get an authorization token to update the public key """
+    try:
+        payload = _json(request.body.decode('utf-8'),['username','signed_challenge'])
         username = payload['username']
         signed_challenge = payload['signed_challenge']
         user = authenticate(request,username=username,signed_challenge=signed_challenge)
         if user is not None:
-            login(request, user)
-            return JsonResponse({'token':UserToken(user).token()})
+            return JsonResponse({'update_token':UpdateToken(user).token()})
         else:
             return get_401(request)
     except Exception as e:
         print(type(e))
         print(e)
         return get_401(request)
-    pass
 
+@require_http_methods(["POST"])
+@csrf_exempt
+def token_login(request):
+    """ simple authentication with a signed challenge return an id_token """
+    try:
+        payload = _json(request.body.decode('utf-8'),('username','signed_challenge'))
+        username = payload['username']
+        signed_challenge = payload['signed_challenge']
+        user = authenticate(request,username=username,signed_challenge=signed_challenge)
+        if user is not None:
+            login(request, user)
+            return JsonResponse({'id_token':UserToken(user).token()})
+        else:
+            return get_401(request)
+    except Exception as e:
+        print(type(e))
+        print(e)
+        print("token login failed")
+        return get_401(request)
 
 def challenge_login(request):
     if request.method == 'POST':

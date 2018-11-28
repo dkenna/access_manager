@@ -1,12 +1,12 @@
 from django.conf import settings
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth.models import User
-from tokenizer import AuthChallenge, SignedChallenge
+from tokenizer import AuthChallenge, ChallengeVerifier
 from jwt.exceptions import InvalidSignatureError
 
 class RSAChallengeBackend:
     """
-    
+       backed that works with signed challenges   
     """
 
     def authenticate(self, request, username, signed_challenge):
@@ -15,13 +15,13 @@ class RSAChallengeBackend:
         except User.DoesNotExist:
             return None
         try:
-            verifier = SignedChallenge()
+            verifier = ChallengeVerifier()
             pub_key = user.profile.public_key
             print(pub_key)
             decoded = verifier.verify(pub_key,signed_challenge)
         except Exception as e:
             """log some shit here"""
-            print("sig decoding failed")
+            print("sig decoding. authentication failed.")
             print(type(e))
             print(e)
             return None
