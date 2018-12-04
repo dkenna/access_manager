@@ -8,12 +8,12 @@ from django.views.decorators.csrf import csrf_exempt
 from jwt.exceptions import InvalidSignatureError 
 import json
 from login.serializers import *
-from tokenizer import AuthChallenge, PubKeyChallenge, UserToken, ChallengeVerifier
+from tokenizer import AuthChallenge, PubKeyChallenge, ChallengeVerifier
+from tokenizer import UserToken, UpdateToken, TokenVerifier
+from tokenizer import PemValidator
 from .forms import *
 from django.contrib.auth import authenticate, login
 import random
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.serialization import load_pem_public_key
 
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
@@ -60,14 +60,21 @@ def validate_token(request):
 def update_pub_key(request):
     """ update user's public key on the server."""
     try:
-        payload = _json(request.body.decode('utf-8'),['token','pub_key'])
-        claims = TokenVerifier(payload['token']).verify()
-        username = claims['username']
-        load_pem_public_key(pubkey, default_backend())
-        user = User.objects.get(username=username)
-        user.profile.public_key = payload['pub_key']
-        user.save()
-    except:
+        payload = _json(request.body.decode('utf-8'),['username','token','pub_key'])
+        verifier = TokenVerifier(payload['token'])
+        claims = verifier.verify(payload['username'])
+        if not claims: 
+            return get_401(request,verifier.errmsg)
+        validator = PemValidator()
+        pem_stat = validator.validate(payload['pub_key'])
+        if pem_stat:
+            user = User.objects.get(username=payload['username'])
+            #user.profile.public_key = payload['public_key']
+            #user.save()
+            return JsonResponse({'status':'good'})
+        else:
+            return get_401(request,validator.errmsg)
+    except Exception as e:
         print(type(e))
         print(e)
         print('update key failed')
@@ -148,6 +155,7 @@ def passphrase_login(request):
     return render(request, 'challenge_login.html', {'form': form})
 
 def get_json_http_error(request,status,msg):
+    print(f'log: status: {status} msg: "{msg}"')
     return JsonResponse(status=status, data={
         'status': 'error',
         'error': msg
@@ -166,5 +174,5 @@ def get_405(request):
     return get_json_http_error(request, 400, "bad meth")
 
 @csrf_exempt
-def get_401(request):
-    return get_json_http_error(request, 401, "forbsidden")
+def get_401(request,msg="forsbidden"):
+    return get_json_http_error(request, 401, msg)

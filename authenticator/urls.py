@@ -21,6 +21,8 @@ urlpatterns = [
     path('accounts/', include('django.contrib.auth.urls')),
     url(r"^get_auth_challenge/?",get_auth_challenge),
     url(r"^get_update_challenge/?",get_update_challenge),
+    url(r"^update_pub_key/?",update_pub_key),
+    url(r"^get_update_token/?",get_update_token),
     url(r"^clogin/?",challenge_login),
     url(r"^plogin/?",passphrase_login),
     url(r"^token_login/?",token_login),

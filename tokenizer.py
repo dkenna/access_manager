@@ -3,8 +3,12 @@ from jwt.algorithms import RSAAlgorithm
 import time
 from datetime import datetime
 #from django.contrib.auth.models import User
+
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.serialization import load_pem_public_key
+
 import os
 import vault as VAULT
 import random
@@ -16,8 +20,8 @@ To run this script, enter a django shell:
 """
 
 SIGNING_ALGO = "RS256"
-TOKEN_TTL = 300 #5 minutes
-TOKEN_TTL_LOGIN = 120 #22 minutes
+TOKEN_TTL = 600 #seconds
+TOKEN_TTL_LOGIN = 600 #seconds
 TOKEN_TYPES = ({"authentication":"auth","update_pub_key":"udpk"})
 
 class BaseToken:
@@ -56,16 +60,20 @@ class UserToken(BaseToken):
         super().__init__()
         self.user = user
         self.claims['username'] = user.username
+        self.claims['aud'] = user.username
         self.claims['email'] = user.email
         self.claims['first_name'] = user.first_name
         self.claims['last_name'] = user.last_name
+        self.claims['typ'] = TOKEN_TYPES["authentication"]
 
 class UpdateToken(BaseToken): 
     """ token to update a user's private key """
     def __init__(self,user):
-        super().__init__(user)
+        super().__init__()
         self.user = user
         self.claims['username'] = user.username
+        self.claims['aud'] = user.username
+        self.claims['typ'] = TOKEN_TYPES["update_pub_key"]
 
 class AuthChallenge(BaseToken):
     '''
@@ -91,10 +99,45 @@ class TokenVerifier:
     """
     def __init__(self, token):
         self.token = token
-    def verify(self):
-        """ check if signed by user """
-        return jwt.decode(self.token, VAULT.pub_key, algorithms=SIGNING_ALGO)
+        self.errmsg = ""
 
+    """def get_claim(self, claim):
+        try:
+            claims = jwt.decode(self.token, verify=False)
+        except:
+            self.errmsg = f"not a valid jwt token!"
+            return None
+        try:
+            return claims[claim]
+        except:
+            self.errmsg = f"failed getting claim {claim}!"
+            return None"""
+            
+        
+    def verify(self, username):
+        """ check if signed by auth server for audience = username"""
+        try: 
+            return jwt.decode(self.token, VAULT.rsa_pub_pem, algorithms=SIGNING_ALGO,\
+                audience=[username])
+        except Exception as e:
+            print(type(e))
+            print(e)
+            self.errmsg = "failed sig verification"
+            return None
+
+class PemValidator:
+    def validate(self, pub_key):
+        try:
+            print(pub_key)
+            bpub_key = pub_key.encode() #expecting bytes
+            serialization.load_pem_public_key(bpub_key, default_backend())
+            return True
+        except Exception as e:
+            print(type(e))
+            print(e)
+            self.errmsg = "pub key validation failed"
+            return False
+        
 class ChallengeVerifier:
     """
         signed challenge (auth or key)

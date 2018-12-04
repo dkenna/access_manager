@@ -17,8 +17,8 @@ class RSAChallengeBackend:
         try:
             verifier = ChallengeVerifier()
             pub_key = user.profile.public_key
-            print(pub_key)
             decoded = verifier.verify(pub_key,signed_challenge)
+            print(f"user authenticated: {user.username}")
         except Exception as e:
             """log some shit here"""
             print("sig decoding. authentication failed.")
