@@ -11,6 +11,10 @@ from urllib.parse import urlparse, parse_qs
     - get userinfo
 """
 
+client_id = '779967'
+client_secret = '5efea7035b919bf410e39609cdcf25b1b0c61a441ef6e9c949aa1c85'
+redirect_uri = 'http://localhost:3000/oidc/callback/'
+
 #   URLs
 url_authorize = "http://localhost:8000/openid/authorize"
 url_login = "http://localhost:8000/token_login/"
@@ -27,13 +31,13 @@ h_authorize = {"Cache-Control":"no-cache","Content-Type":"application/x-www-form
 h_login = {"Content-Type": "application/json"}
 
 #   data
-d_token = {"client_id":"488892", \
-            "client_secret":"f6095c4df003c5ce386bca06a885a44f03ce8ecdc0151167aa742c1c", \
-            "code":"%", "redirect_uri":"http://localhost:3000/oidc/callback/", \
+d_token = {"client_id":client_id,
+            "client_secret":client_secret, \
+            "code":"%", "redirect_uri":redirect_uri, \
             "grant_type":"authorization_code"}
-d_authorize = {"client_id":"488892", \
+d_authorize = {"client_id":client_id, \
             "scope":"openid email profile", \
-            "state":"889822", "redirect_uri":"http://localhost:3000/oidc/callback/", \
+            "state":"889822", "redirect_uri":redirect_uri, \
             "response_type":"code"}
 d_login = {"username":sys.argv[1],"signed_challenge":sys.argv[2]}
 

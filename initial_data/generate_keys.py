@@ -10,6 +10,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.backends import default_backend
 import names
 import random
+import hashlib
 
 """
 To run this script, enter a django shell:
@@ -49,6 +50,7 @@ def make_rsa_users():
         user.profile.passphrase = passphrase
         user.profile.public_key = public_key
         user.profile.private_key = pem
+        user.profile.passphrase_hash = hashlib.sha224(passphrase.encode()).hexdigest()
         user.save()
         #print(private_key_str)
         #print(public_key_str)

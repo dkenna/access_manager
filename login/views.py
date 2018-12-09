@@ -136,7 +136,7 @@ def challenge_login(request):
         form = ChallengeLoginForm()
     return render(request, 'challenge_login.html', {'form': form})
 
-def passphrase_login(request):
+'''def passphrase_login(request):
     if request.method == 'POST':
         form = PassphraseLoginForm(request.POST)
         if form.is_valid():
@@ -149,10 +149,28 @@ def passphrase_login(request):
                 if next_url:
                     print('redirecting to: ' + next_url)
                     return HttpResponseRedirect(next_url)
-                return HttpResponseRedirect('/')
+            return HttpResponseRedirect('/')
     else:
         form = PassphraseLoginForm()
-    return render(request, 'challenge_login.html', {'form': form})
+    return render(request, 'challenge_login.html', {'form': form})'''
+
+@require_http_methods(["POST"])
+@csrf_exempt
+def passphrase_login_json(request):
+    try:
+        payload = _json(request.body.decode('utf-8'),['passphrase'])
+        passphrase = payload['passphrase']
+        user = authenticate(request, passphrase=passphrase)
+        if user is not None:
+            login(request, user)
+            return JsonResponse({'username': user.username, 'update_token':UserToken(user).token()})
+        else:
+            return get_401(request)
+    except Exception as e:
+        print(type(e))
+        print(e)
+        print("token login failed")
+        return get_401(request)
 
 def get_json_http_error(request,status,msg):
     print(f'log: status: {status} msg: "{msg}"')

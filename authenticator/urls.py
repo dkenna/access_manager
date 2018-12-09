@@ -24,7 +24,8 @@ urlpatterns = [
     url(r"^update_pub_key/?",update_pub_key),
     url(r"^get_update_token/?",get_update_token),
     url(r"^clogin/?",challenge_login),
-    url(r"^plogin/?",passphrase_login),
+    url(r"^plogin_/?",passphrase_login_json),
+    #url(r"^plogin/?",passphrase_login), #<--- old form login
     url(r"^token_login/?",token_login),
     url(r"^validate_token/?",validate_token),
     url(r'^openid/', include('oidc_provider.urls', namespace='oidc_provider')),
