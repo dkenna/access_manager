@@ -2,6 +2,7 @@ from django.shortcuts import render
 from login.models import *
 from django.contrib.auth.models import User
 from rest_framework import routers, serializers, viewsets
+from rest_framework.permissions import IsAuthenticated
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseRedirect
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
@@ -9,11 +10,13 @@ from jwt.exceptions import InvalidSignatureError
 import json
 from login.serializers import *
 from tokenizer import AuthChallenge, PubKeyChallenge, ChallengeVerifier
-from tokenizer import UserToken, UpdateToken, TokenVerifier
+from tokenizer import UserToken, UpdateToken, TokenVerifier, ServerKeys
 from tokenizer import PemValidator
 from .forms import *
 from django.contrib.auth import authenticate, login
 import random
+from jwcrypto import jwk
+import vault as VAULT
 
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
@@ -30,6 +33,24 @@ def get_update_challenge(request):
 @require_http_methods(["GET"])
 def get_auth_challenge(request):
     return JsonResponse({"token": AuthChallenge().token()})
+
+@require_http_methods(["GET"])
+def get_jwks(request):
+    '''pk = ServerKeys().get_jwk()
+    print(pk)
+    quit()'''
+    pk = VAULT.rsa_pub.encode('ascii')
+    pk_jwk = jwk.JWK()
+    pk_jwk.import_from_pem(pk)
+    jwks = jwk.JWKSet()
+    jwks.add(pk_jwk)
+    export = jwks.export(private_keys=False)
+    return JsonResponse(json.loads(export))
+
+@require_http_methods(["GET"])
+def get_pem(request):
+    obj = {"key":VAULT.rsa_pub}
+    return JsonResponse(obj)
 
 def _json(body,keys):
     """load json and ensure all keys are present"""
@@ -63,7 +84,8 @@ def update_pub_key(request):
         payload = _json(request.body.decode('utf-8'),['username','token','pub_key'])
         verifier = TokenVerifier(payload['token'])
         claims = verifier.verify(payload['username'])
-        if not claims: 
+        hverify = verifier.verify_header()
+        if not claims or not hverify: 
             return get_401(request,verifier.errmsg)
         validator = PemValidator()
         pem_stat = validator.validate(payload['pub_key'])
@@ -88,6 +110,10 @@ def get_update_token(request):
         payload = _json(request.body.decode('utf-8'),['username','signed_challenge'])
         username = payload['username']
         signed_challenge = payload['signed_challenge']
+        verifier = TokenVerifier(signed_challenge)
+        hverify = verifier.verify_header()
+        if not hverify: 
+            return get_401(request,verifier.errmsg)
         user = authenticate(request,username=username,signed_challenge=signed_challenge)
         if user is not None:
             return JsonResponse({'update_token':UpdateToken(user).token()})
@@ -106,6 +132,10 @@ def token_login(request):
         payload = _json(request.body.decode('utf-8'),('username','signed_challenge'))
         username = payload['username']
         signed_challenge = payload['signed_challenge']
+        verifier = TokenVerifier(signed_challenge)
+        hverify = verifier.verify_header()
+        if not hverify: 
+            return get_401(request,verifier.errmsg)
         user = authenticate(request,username=username,signed_challenge=signed_challenge)
         if user is not None:
             login(request, user)
@@ -124,6 +154,10 @@ def challenge_login(request):
         if form.is_valid():
             signed_challenge = form.cleaned_data['signed_challenge']
             username = form.cleaned_data['username']
+            verifier = TokenVerifier(signed_challenge)
+            hverify = verifier.verify_header()
+            if not hverify: 
+                return get_401(request,verifier.errmsg)
             user = authenticate(request,username=username,signed_challenge=signed_challenge)
             if user is not None:
                 login(request, user)
@@ -159,17 +193,19 @@ def challenge_login(request):
 def passphrase_login_json(request):
     try:
         payload = _json(request.body.decode('utf-8'),['passphrase'])
-        passphrase = payload['passphrase']
-        user = authenticate(request, passphrase=passphrase)
+        phash = VAULT.decode_rsa(payload['passphrase'])
+        user = authenticate(request, phash=phash)
         if user is not None:
             login(request, user)
-            return JsonResponse({'username': user.username, 'update_token':UserToken(user).token()})
+            return JsonResponse({'username': user.username, 'id_token':UserToken(user).token()})
         else:
+            print('user not found')
             return get_401(request)
     except Exception as e:
         print(type(e))
         print(e)
         print("token login failed")
+        raise e
         return get_401(request)
 
 def get_json_http_error(request,status,msg):

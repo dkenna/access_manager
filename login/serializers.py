@@ -11,4 +11,4 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         #fields = ('id','public_key','private_key', 'passphrase','user')
-        fields = ('id','public_key','private_key', 'passphrase','user')
+        fields = ('id','rsa_public_key','ecdsa_public_key','user')

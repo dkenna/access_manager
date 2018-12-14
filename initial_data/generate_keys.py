@@ -12,6 +12,9 @@ import names
 import random
 import hashlib
 
+from ecdsa import NIST384p, SigningKey
+from ecdsa.util import randrange_from_seed__trytryagain
+
 """
 To run this script, enter a django shell:
 ...
@@ -23,10 +26,22 @@ def make_key(seed):
   secexp = randrange_from_seed__trytryagain(seed, NIST384p.order)
   return SigningKey.from_secret_exponent(secexp, curve=NIST384p)
 
+def make_ecdsa_keys():
+        seed = os.urandom(NIST384p.baselen) # or other starting point
+        seed_hex = seed.hex()#.decode('ascii')
+        sk = make_key(seed)
+        vk = sk.get_verifying_key()
+        sk_hex = hexlify(sk.to_string()).decode('ascii')
+        vk_hex = hexlify(vk.to_string()).decode('ascii')
+        print('pub: ' + vk_hex)
+        print('key: ' + sk_hex)
+        print('seed: ' + sk_hex)
+        return (seed_hex, sk_hex, vk_hex)
+
 def make_rsa_users():
     for i in range(35):
         key = rsa.generate_private_key(backend=default_backend(), public_exponent=65537, key_size=2048)
-        public_key = key.public_key().public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.PKCS1)
+        public_key = key.public_key().public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo)
         pem = key.private_bytes(encoding=serialization.Encoding.PEM, format=serialization.PrivateFormat.TraditionalOpenSSL, encryption_algorithm=serialization.NoEncryption())
         public_key = str(public_key,"utf-8")
         pem = str(pem,"utf-8")
@@ -48,9 +63,13 @@ def make_rsa_users():
         user.set_password(passphrase)
         user.save()
         user.profile.passphrase = passphrase
-        user.profile.public_key = public_key
-        user.profile.private_key = pem
-        user.profile.passphrase_hash = hashlib.sha224(passphrase.encode()).hexdigest()
+        user.profile.passphrase_hash = hashlib.sha256(passphrase.encode()).hexdigest()
+        user.profile.rsa_public_key = public_key
+        user.profile.rsa_private_key = pem
+        ecdsa_keys = make_ecdsa_keys()
+        user.profile.ecdsa_public_key = ecdsa_keys[2]
+        user.profile.ecdsa_private_key = ecdsa_keys[1]
+        user.profile.seed = ecdsa_keys[0]
         user.save()
         #print(private_key_str)
         #print(public_key_str)
@@ -65,23 +84,3 @@ def delete_users():
 delete_users()
 make_rsa_users()
 
-def make_ecdsa_users():
-    for i in range(25):
-        seed = os.urandom(NIST384p.baselen) # or other starting point
-        sk = make_key(seed)
-        vk = sk.get_verifying_key()
-        sk_hex = hexlify(sk.to_string())
-        vk_hex = hexlify(vk.to_string())
-        uname = get_uname(0,255,False)
-        mail = uname + "@" + "mail.com"
-        user = User()
-        user.username = uname
-        user.email = mail
-        user.password = "password1"
-        user.save()
-        user.profile.public_key = vk_hex
-        user.profile.private_key = sk_hex
-        user.save()
-        print(uname)
-        print(sk_hex)
-        print(vk_hex)

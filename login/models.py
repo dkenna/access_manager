@@ -6,9 +6,11 @@ import uuid
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    public_key = models.TextField(blank=True)
-    private_key = models.TextField(blank=True)
-    seed = models.TextField(blank=True)
+    rsa_public_key = models.TextField(blank=True)
+    rsa_private_key = models.TextField(blank=True)
+    ecdsa_public_key = models.CharField(max_length=512,blank=True)
+    ecdsa_private_key = models.CharField(max_length=512, blank=True)
+    seed = models.CharField(max_length=512, blank=True)
     passphrase = models.CharField(max_length=2048, blank=True)
     passphrase_hash = models.CharField(max_length=2048, blank=True)    
 

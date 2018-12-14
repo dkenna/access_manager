@@ -20,9 +20,19 @@ To run this script, enter a django shell:
 """
 
 SIGNING_ALGO = "RS256"
+ALLOWED_ALGOS = ['RS256']
 TOKEN_TTL = 600 #seconds
 TOKEN_TTL_LOGIN = 600 #seconds
 TOKEN_TYPES = ({"authentication":"auth","update_pub_key":"udpk"})
+
+class ServerKeys:
+    def get_jwk(self):
+        pub_bytes = bytes(VAULT.rsa_pub,"utf-8")
+        public_key = serialization.load_pem_public_key(pub_bytes, backend=default_backend())
+        print(public_key)
+        print('-------')
+        #return [public_key.encode('ascii')]
+        return RSAAlgorithm.to_jwk(public_key)
 
 class BaseToken:
     _jit = random.randint(100000000,999999999)
@@ -42,16 +52,19 @@ class BaseToken:
 
     def now(self):
         return int(time.time())
-        
+
+    def verify_header(self,token):
+        pass
+
     def verify(self,token):
-        return jwt.decode(token, VAULT.rsa_pub_pem, algorithms=SIGNING_ALGO,\
+        return jwt.decode(token, VAULT.rsa_pub, algorithms=SIGNING_ALGO,\
                  audience=['urn:anybody'])
 
     def verify_timestamp(self):
         return self.token["exp"] > self.now()
 
     def get_jwk(self):
-        pub_bytes = bytes(VAULT.rsa_pub_pem,"utf-8")
+        pub_bytes = bytes(VAULT.rsa_pub,"utf-8")
         public_key = serialization.load_pem_public_key(pub_bytes, backend=default_backend())
         return RSAAlgorithm.to_jwk(public_key)
         
@@ -112,12 +125,23 @@ class TokenVerifier:
         except:
             self.errmsg = f"failed getting claim {claim}!"
             return None"""
-            
+
+    def verify_header(self):
+        h = jwt.get_unverified_header(this.token)
+        try:
+            assert(h['alg'] in ALLOWED_ALGOS)
+            return True
+        except Exception as e:
+            print(type(e))
+            print(e)
+            self.errmsg = "header verification faildes"
+            return None
+        pass
         
     def verify(self, username):
         """ check if signed by auth server for audience = username"""
         try: 
-            return jwt.decode(self.token, VAULT.rsa_pub_pem, algorithms=SIGNING_ALGO,\
+            return jwt.decode(self.token, VAULT.rsa_pub, algorithms=SIGNING_ALGO,\
                 audience=[username])
         except Exception as e:
             print(type(e))

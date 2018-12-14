@@ -4,7 +4,8 @@ __pycache__/
 *.py[cod]
 db.sqlite3
 authenticator/settings.py
-
+keys/
+uwsgi*
 
 *.swp
 

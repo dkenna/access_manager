@@ -8,16 +8,16 @@ from login.models import Profile
 
 class PassphraseBackend:
 
-    def authenticate(self, request, passphrase):
+    def authenticate(self, request, phash='none'):
         try:
-            phash = hashlib.sha224(passphrase.encode()).hexdigest()
+            print(phash)
             user = Profile.objects.get(passphrase_hash=phash).user
         except User.DoesNotExist:
             return None
         try:
-            assert(passphrase == user.profile.passphrase)
+            assert(phash == user.profile.passphrase_hash)
             return user
-        except:
+        except Exception as e:
             """log some shit here"""
             print("sig decoding failed")
             print(type(e))

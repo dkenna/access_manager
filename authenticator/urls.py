@@ -18,12 +18,14 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     url(r'', include('user_sessions.urls', 'user_sessions')),
-    path('accounts/', include('django.contrib.auth.urls')),
+    #path('accounts/', include('django.contrib.auth.urls')),
+    url(r"^get_jwks/?",get_jwks),
+    #url(r"^get_pem/?",get_pem),
     url(r"^get_auth_challenge/?",get_auth_challenge),
     url(r"^get_update_challenge/?",get_update_challenge),
     url(r"^update_pub_key/?",update_pub_key),
     url(r"^get_update_token/?",get_update_token),
-    url(r"^clogin/?",challenge_login),
+    #url(r"^clogin/?",challenge_login), #with form
     url(r"^plogin_/?",passphrase_login_json),
     #url(r"^plogin/?",passphrase_login), #<--- old form login
     url(r"^token_login/?",token_login),
