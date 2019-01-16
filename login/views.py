@@ -18,6 +18,16 @@ import random
 from jwcrypto import jwk
 import vault as VAULT
 
+import logging
+logger = logging.getLogger("django")
+
+def log(msg):
+    logger.debug(msg)
+def log_error(e, msg):
+    log(str(type(e)))
+    log(str(e))
+    log(msg)
+    
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
@@ -76,137 +86,36 @@ def validate_token(request):
         print(e)
         return HttpResponseBadRequest()
 
-@require_http_methods(["POST"])
-@csrf_exempt
-def update_pub_key(request):
-    """ update user's public key on the server."""
-    try:
-        payload = _json(request.body.decode('utf-8'),['username','token','pub_key'])
-        verifier = TokenVerifier(payload['token'])
-        claims = verifier.verify(payload['username'])
-        hverify = verifier.verify_header()
-        if not claims or not hverify: 
-            return get_401(request,verifier.errmsg)
-        validator = PemValidator()
-        pem_stat = validator.validate(payload['pub_key'])
-        if pem_stat:
-            user = User.objects.get(username=payload['username'])
-            #user.profile.public_key = payload['public_key']
-            #user.save()
-            return JsonResponse({'status':'good'})
-        else:
-            return get_401(request,validator.errmsg)
-    except Exception as e:
-        print(type(e))
-        print(e)
-        print('update key failed')
-        return get_401(request)
-
-@require_http_methods(["POST"])
-@csrf_exempt
-def get_update_token(request):
-    """ get an authorization token to update the public key """
-    try:
-        payload = _json(request.body.decode('utf-8'),['username','signed_challenge'])
-        username = payload['username']
-        signed_challenge = payload['signed_challenge']
-        verifier = TokenVerifier(signed_challenge)
-        hverify = verifier.verify_header()
-        if not hverify: 
-            return get_401(request,verifier.errmsg)
-        user = authenticate(request,username=username,signed_challenge=signed_challenge)
-        if user is not None:
-            return JsonResponse({'update_token':UpdateToken(user).token()})
-        else:
-            return get_401(request)
-    except Exception as e:
-        print(type(e))
-        print(e)
-        return get_401(request)
-
-@require_http_methods(["POST"])
-@csrf_exempt
-def token_login(request):
-    """ simple authentication with a signed challenge return an id_token """
-    try:
-        payload = _json(request.body.decode('utf-8'),('username','signed_challenge'))
-        username = payload['username']
-        signed_challenge = payload['signed_challenge']
-        verifier = TokenVerifier(signed_challenge)
-        hverify = verifier.verify_header()
-        if not hverify: 
-            return get_401(request,verifier.errmsg)
-        user = authenticate(request,username=username,signed_challenge=signed_challenge)
-        if user is not None:
-            login(request, user)
-            return JsonResponse({'id_token':UserToken(user).token()})
-        else:
-            return get_401(request)
-    except Exception as e:
-        print(type(e))
-        print(e)
-        print("token login failed")
-        return get_401(request)
-
-def challenge_login(request):
-    if request.method == 'POST':
-        form = ChallengeLoginForm(request.POST)
-        if form.is_valid():
-            signed_challenge = form.cleaned_data['signed_challenge']
-            username = form.cleaned_data['username']
-            verifier = TokenVerifier(signed_challenge)
-            hverify = verifier.verify_header()
-            if not hverify: 
-                return get_401(request,verifier.errmsg)
-            user = authenticate(request,username=username,signed_challenge=signed_challenge)
-            if user is not None:
-                login(request, user)
-                next_url = request.GET.get('next')
-                if next_url:
-                    print('redirecting to: ' + next_url)
-                    return HttpResponseRedirect(next_url)
-                return HttpResponseRedirect('/')
-    else:
-        form = ChallengeLoginForm()
-    return render(request, 'challenge_login.html', {'form': form})
-
-'''def passphrase_login(request):
-    if request.method == 'POST':
-        form = PassphraseLoginForm(request.POST)
-        if form.is_valid():
-            passphrase = form.cleaned_data['passphrase']
-            username = form.cleaned_data['username']
-            user = authenticate(request,username=username,passphrase=passphrase)
-            if user is not None:
-                login(request, user)
-                next_url = request.GET.get('next')
-                if next_url:
-                    print('redirecting to: ' + next_url)
-                    return HttpResponseRedirect(next_url)
-            return HttpResponseRedirect('/')
-    else:
-        form = PassphraseLoginForm()
-    return render(request, 'challenge_login.html', {'form': form})'''
-
-@require_http_methods(["POST"])
+@require_http_methods(["GET","POST"])
 @csrf_exempt
 def passphrase_login_json(request):
-    try:
-        payload = _json(request.body.decode('utf-8'),['passphrase'])
-        phash = VAULT.decode_rsa(payload['passphrase'])
-        user = authenticate(request, phash=phash)
-        if user is not None:
-            login(request, user)
-            return JsonResponse({'username': user.username, 'id_token':UserToken(user).token()})
-        else:
-            print('user not found')
+    m = request.method
+    context = {}
+    context['next'] = request.GET.get('next')
+    if m == 'GET':
+        return render(request, 'login.html', context)
+    if m == 'POST':
+        try:
+            payload = _json(request.body.decode('utf-8'),['key', 'username', 'passphrase'])
+        except Exception as e:
+            log_error(e, "bad json")
             return get_401(request)
-    except Exception as e:
-        print(type(e))
-        print(e)
-        print("token login failed")
-        raise e
-        return get_401(request)
+        try:
+            phash = VAULT.decode_rsa(payload['passphrase'])
+        except Exception as e:
+            log_error(e, "decryption failed")
+            return get_401(request)
+        try:
+            user = authenticate(request, username, phash=phash)
+            if user is not None:
+                login(request, user)
+                return JsonResponse({'username': user.username, 'id_token':UserToken(user).token()})
+            else:
+                log_error('authentication failed')
+                return get_401(request)
+        except Exception as e:
+            log_error(e, "login failed")
+            return get_401(request)
 
 def get_json_http_error(request,status,msg):
     print(f'log: status: {status} msg: "{msg}"')
@@ -230,3 +139,125 @@ def get_405(request):
 @csrf_exempt
 def get_401(request,msg="forsbidden"):
     return get_json_http_error(request, 401, msg)
+
+#'''
+#@require_http_methods(["POST"])
+#@csrf_exempt
+#def update_pub_key(request):
+#    """ update user's public key on the server."""
+#    try:
+#        payload = _json(request.body.decode('utf-8'),['username','token','pub_key'])
+#        verifier = TokenVerifier(payload['token'])
+#        claims = verifier.verify(payload['username'])
+#        hverify = verifier.verify_header()
+#        if not claims or not hverify: 
+#            return get_401(request,verifier.errmsg)
+#        validator = PemValidator()
+#        pem_stat = validator.validate(payload['pub_key'])
+#        if pem_stat:
+#            user = User.objects.get(username=payload['username'])
+#            #user.profile.public_key = payload['public_key']
+#            #user.save()
+#            return JsonResponse({'status':'good'})
+#        else:
+#            return get_401(request,validator.errmsg)
+#    except Exception as e:
+#        print(type(e))
+#        print(e)
+#        print('update key failed')
+#        return get_401(request)
+#'''
+#'''
+#@require_http_methods(["POST"])
+#@csrf_exempt
+#def get_update_token(request):
+#    """ get an authorization token to update the public key """
+#    try:
+#        payload = _json(request.body.decode('utf-8'),['username','signed_challenge'])
+#        username = payload['username']
+#        signed_challenge = payload['signed_challenge']
+#        verifier = TokenVerifier(signed_challenge)
+#        hverify = verifier.verify_header()
+#        if not hverify: 
+#            return get_401(request,verifier.errmsg)
+#        user = authenticate(request,username=username,signed_challenge=signed_challenge)
+#        if user is not None:
+#            return JsonResponse({'update_token':UpdateToken(user).token()})
+#        else:
+#            return get_401(request)
+#    except Exception as e:
+#        print(type(e))
+#        print(e)
+#        return get_401(request)
+#'''
+#
+#'''
+#@require_http_methods(["POST"])
+#@csrf_exempt
+#def token_login(request):
+#    """ simple authentication with a signed challenge return an id_token """
+#    try:
+#        payload = _json(request.body.decode('utf-8'),('username','signed_challenge'))
+#        username = payload['username']
+#        signed_challenge = payload['signed_challenge']
+#        verifier = TokenVerifier(signed_challenge)
+#        hverify = verifier.verify_header()
+#        if not hverify: 
+#            return get_401(request,verifier.errmsg)
+#        user = authenticate(request,username=username,signed_challenge=signed_challenge)
+#        if user is not None:
+#            login(request, user)
+#            return JsonResponse({'id_token':UserToken(user).token()})
+#        else:
+#            return get_401(request)
+#    except Exception as e:
+#        print(type(e))
+#        print(e)
+#        print("token login failed")
+#        return get_401(request)
+#'''
+#
+#'''
+#def challenge_login(request):
+#    if request.method == 'POST':
+#        form = ChallengeLoginForm(request.POST)
+#        if form.is_valid():
+#            signed_challenge = form.cleaned_data['signed_challenge']
+#            username = form.cleaned_data['username']
+#            verifier = TokenVerifier(signed_challenge)
+#            hverify = verifier.verify_header()
+#            if not hverify: 
+#                return get_401(request,verifier.errmsg)
+#            user = authenticate(request,username=username,signed_challenge=signed_challenge)
+#            if user is not None:
+#                login(request, user)
+#                next_url = request.GET.get('next')
+#                if next_url:
+#                    print('redirecting to: ' + next_url)
+#                    return HttpResponseRedirect(next_url)
+#                return HttpResponseRedirect('/')
+#    else:
+#        form = ChallengeLoginForm()
+#    return render(request, 'challenge_login.html', {'form': form})"""
+#
+#'''
+#'''
+#def passphrase_login(request):
+#    if request.method == 'POST':
+#        form = PassphraseLoginForm(request.POST)
+#        if form.is_valid():
+#            passphrase = form.cleaned_data['passphrase']
+#            username = form.cleaned_data['username']
+#            user = authenticate(request,username=username,passphrase=passphrase)
+#            if user is not None:
+#                login(request, user)
+#                next_url = request.GET.get('next')
+#                if next_url:
+#                    print('redirecting to: ' + next_url)
+#                    return HttpResponseRedirect(next_url)
+#            return HttpResponseRedirect('/')
+#    else:
+#        form = PassphraseLoginForm()
+#    return render(request, 'challenge_login.html', {'form': form})
+#'''
+#

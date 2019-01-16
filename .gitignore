@@ -8,7 +8,10 @@ keys/
 uwsgi*
 
 *.swp
+*.log
+logs/*
 
+login/static/*
 
 static/
 authenticator/key.txt

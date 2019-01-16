@@ -73,6 +73,7 @@ class UserToken(BaseToken):
         super().__init__()
         self.user = user
         self.claims['username'] = user.username
+        self.claims['sub'] = user.username
         self.claims['aud'] = user.username
         self.claims['email'] = user.email
         self.claims['first_name'] = user.first_name

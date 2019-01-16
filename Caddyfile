@@ -1,0 +1,9 @@
+https://dkenna.com:8000 {
+   root /home/anon/authenticator/authenticator
+   proxy / localhost:9000 {
+        transparent
+        except /media /static
+    }
+   errors logs/error.log
+   log logs/access.log
+}

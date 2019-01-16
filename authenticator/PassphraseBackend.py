@@ -8,14 +8,14 @@ from login.models import Profile
 
 class PassphraseBackend:
 
-    def authenticate(self, request, phash='none'):
+    def authenticate(self, request, username, passphrase):
         try:
-            print(phash)
-            user = Profile.objects.get(passphrase_hash=phash).user
+            print(passphrase)
+            user = Profile.objects.get(passphrase=passphrase).user
         except User.DoesNotExist:
             return None
         try:
-            assert(phash == user.profile.passphrase_hash)
+            assert(passphrase == user.profile.passphrase)
             return user
         except Exception as e:
             """log some shit here"""
