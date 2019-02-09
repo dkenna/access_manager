@@ -3,6 +3,13 @@ from django.contrib.auth.hashers import check_password
 from django.contrib.auth.models import User
 from tokenizer import AuthChallenge, ChallengeVerifier
 from jwt.exceptions import InvalidSignatureError
+import logging
+logger = logging.getLogger("django")
+
+def log_error(e, msg):
+    log(str(type(e)))
+    log(str(e))
+    log(msg)
 
 class RSAChallengeBackend:
     """
@@ -20,10 +27,7 @@ class RSAChallengeBackend:
             decoded = verifier.verify(pub_key,signed_challenge)
             print(f"user authenticated: {user.username}")
         except Exception as e:
-            """log some shit here"""
-            print("sig decoding. authentication failed.")
-            print(type(e))
-            print(e)
+            log_error(e, "sig decoding. authentication failed.")
             return None
         return user
 

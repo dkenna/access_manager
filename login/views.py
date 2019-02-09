@@ -106,15 +106,16 @@ def passphrase_login_json(request):
             log_error(e, "decryption failed")
             return get_401(request)
         try:
-            user = authenticate(request, username, phash=phash)
+            user = authenticate(request, username=payload['username'],\
+                        passphrase=phash)
             if user is not None:
                 login(request, user)
                 return JsonResponse({'username': user.username, 'id_token':UserToken(user).token()})
             else:
-                log_error('authentication failed')
+                log('authentication failed')
                 return get_401(request)
         except Exception as e:
-            log_error(e, "login failed")
+            log_error(e, "llogin failed")
             return get_401(request)
 
 def get_json_http_error(request,status,msg):
