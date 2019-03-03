@@ -18,13 +18,12 @@ def log_error(e, msg):
 class PassphraseBackend:
 
     def authenticate(self, request, username=None, passphrase=None):
+        print("__PASSPHRASE AUTH__")
         try:
             log(passphrase)
-            user = Profile.objects.get(passphrase_hash=passphrase).user
-        except Profile.DoesNotExist:
-            return None
-        try:
-            assert(passphrase == user.profile.passphrase_hash)
+            #user = Profile.objects.get(passphrase_hash=passphrase).user
+            user = Profile.objects.get(passphrase=passphrase).user
+            assert(passphrase == user.profile.passphrase)
             return user
         except Exception as e:
             log_error(e, "sig decoding. authentication failed.")

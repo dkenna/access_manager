@@ -1,1 +1,50 @@
-<!DOCTYPE html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>frontend</title><link href=/static/css/app.93cfeb37bc1a4c8938b0939fe2bd52f6.css rel=stylesheet></head><body><div id=app></div><script type=text/javascript src=/static/js/manifest.2ae2e69a05c33dfc65f8.js></script><script type=text/javascript src=/static/js/vendor.4f327db387273c087d65.js></script><script type=text/javascript src=/static/js/app.7969b21ef3f2d2a978f7.js></script></body></html>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset=utf-8>
+    <title>Login</title>
+    <link rel="stylesheet" type="text/css" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet">
+</head>
+<body>
+<div id="app">
+    <form action="/login/" method="POST">
+    {% csrf_token %}
+      <div class="formtitle">
+        {% verbatim %}
+            {{ msg }}
+        {% endverbatim %}
+      </div>
+      <div id="alerts" class="errormsg">
+        {% if err_msg %}
+        <span>{{ err_msg }}</span>
+        {% endif %}
+      </div>
+        <label for="username">username:</label>
+        <input type="text" name="username" id="username"></input>
+      <div>
+      </div>
+      <div>
+        <label for="passphrase">passphrase:</label>
+        <textarea name="passphrase" id="passphrase"></textarea>
+      </div>
+      <div class="button">
+        <button type="submit">Login</button>
+      </div>
+    </form>
+</div>
+<!--<script src="https://unpkg.com/axios/dist/axios.min.js"></script>-->
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script>
+    new Vue({
+      el: '#app' ,
+      data: {
+        errors: [],
+        msg: 'Login'
+      },
+      created: function () {
+      }
+    });
+  </script>
+</body>
+</html>

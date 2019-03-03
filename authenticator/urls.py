@@ -25,8 +25,10 @@ urlpatterns = [
     #url(r"^get_update_challenge/?",get_update_challenge),
     #url(r"^update_pub_key/?",update_pub_key),
     #url(r"^get_update_token/?",get_update_token),
-    #url(r"^clogin/?",challenge_login), #with form
-    url(r"^plogin_/?",passphrase_login_json),
+    url(r"^login_success/?$",login_success), #with form
+    url(r"^login/?$",passphrase_login), #with form
+    url(r"^logout/?$",logout_user, name='logout'),
+    url(r"^plogin_/?$",passphrase_login_json),
     #url(r"^plogin/?",passphrase_login), #<--- old form login
     #url(r"^token_login/?",token_login),
     url(r"^validate_token/?",validate_token),

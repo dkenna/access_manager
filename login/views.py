@@ -14,9 +14,11 @@ from tokenizer import UserToken, UpdateToken, TokenVerifier, ServerKeys
 from tokenizer import PemValidator
 from .forms import *
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.decorators import login_required
 import random
 from jwcrypto import jwk
 import vault as VAULT
+from django.contrib.auth import logout
 
 import logging
 logger = logging.getLogger("django")
@@ -72,6 +74,11 @@ def _json(body,keys):
         print("parsing json failed.")
         raise e
     return payload
+
+def logout_user(request):
+    logout(request)
+    return HttpResponseRedirect('/login')
+    
     
 @require_http_methods(["POST"])
 @csrf_exempt
@@ -85,6 +92,47 @@ def validate_token(request):
     except Exception as e:
         print(e)
         return HttpResponseBadRequest()
+
+def passphrase_login(request):
+    print('_____PASSPHRASE LOGIN______')
+    if request.method == 'POST':
+        form = PassphraseLoginForm(request.POST)
+        print(form)
+        print(request.POST)
+        if form.is_valid():
+            print('___VALID_FORM___')
+            passphrase = form.cleaned_data['passphrase']
+            username = form.cleaned_data['username']
+            log("USER LOGGIN IN: " + username)
+            user = authenticate(request,username=username,passphrase=passphrase)
+            if user is not None:
+                login(request, user)
+                next_url = request.GET.get('next')
+                if next_url:
+                    print('redirecting to: ' + next_url)
+                    return HttpResponseRedirect(next_url)
+                else:
+                    return HttpResponseRedirect('/login_success')
+            else:
+                err_msg = "Failed Login attempt."
+                return render(request, 'login.html', {'form': form, 'err_msg': err_msg})
+        else:
+            print('___INVALID_FORM___')
+            err_msg = "Failed Login attempt."
+            return render(request, 'login.html', context = {'err_msg': err_msg})
+    else:
+        if request.user.is_authenticated:
+            print(request.user.username)
+            return HttpResponseRedirect('/login_success')
+        else:
+            form = PassphraseLoginForm()
+            return render(request, 'login.html', {'form': form, 'err_msg': ''})
+
+@login_required
+@require_http_methods(["GET"])
+def login_success(request):
+    return render(request, 'login_success.html', {})
+
 
 @require_http_methods(["GET","POST"])
 @csrf_exempt
