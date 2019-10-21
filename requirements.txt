@@ -10,7 +10,7 @@ django-cors-headers==2.4.0
 django-oidc-provider==0.7.0
 django-user-sessions==1.6.0
 djangorestframework==3.9.0
-ecdsa==0.13
+ecdsa==0.13.3
 future==0.17.1
 idna==2.7
 jwcrypto==0.6.0
